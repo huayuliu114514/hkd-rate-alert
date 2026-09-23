@@ -178,14 +178,21 @@ class DashboardHandler(BaseHTTPRequestHandler):
       ) = parse_settings(query)
       rates = fetch_rates(lookback_days, base_currency, quote_currency)
       summary = summarise(rates)
+      alert = should_alert(summary, tolerance_pct, percentile_limit)
       title, body = build_message(
           summary,
           lookback_days,
           base_currency,
           quote_currency,
-          should_alert(summary, tolerance_pct, percentile_limit),
+          alert,
       )
-      send_bark(device_key, title, body, f"{base_currency}/{quote_currency}")
+      send_bark(
+          device_key,
+          title,
+          body,
+          f"{base_currency}/{quote_currency}",
+          urgent=alert,
+      )
       self._send_json({"sent": True, "title": title, "body": body})
     except ValueError as error:
       self._send_json({"error": str(error)}, HTTPStatus.BAD_REQUEST)

@@ -113,9 +113,9 @@ def build_message(
   above_min = (summary.current / summary.minimum - 1) * 100
   pair = f"{base_currency}/{quote_currency}"
   title = (
-      f"【低点提醒】{pair} 汇率接近近期低点"
+      f"⚠️【低点提醒】{pair} {summary.current:.5f}，接近近期最低，适合换汇"
       if alert
-      else f"{pair} 今日汇率 {summary.current:.5f}，暂未到低位"
+      else f"{pair} 最新汇率 {summary.current:.5f}，暂未到低位"
   )
   body = (
     f"{summary.date}：1 {base_currency} = "
@@ -143,14 +143,22 @@ def send_bark(
   title: str,
   body: str,
   group: str = "Exchange Rate",
+  urgent: bool = False,
 ) -> None:
   """Send a push notification to the Bark iOS app."""
-  data = json.dumps({
+  payload = {
       "device_key": device_key,
       "title": title,
       "body": body,
       "group": group,
-  }).encode("utf-8")
+  }
+  if urgent:
+    # Breaks through Focus and rings for 30 seconds.
+    payload.update({"level": "timeSensitive", "sound": "alarm", "call": "1"})
+  else:
+    # Delivered to Notification Center without sound or waking the screen.
+    payload["level"] = "passive"
+  data = json.dumps(payload).encode("utf-8")
   request = urllib.request.Request(
       BARK_API,
       data=data,
@@ -234,7 +242,7 @@ def main() -> int:
     print("BARK_KEY is not set; notification not sent.", file=sys.stderr)
     return 1
 
-  send_bark(device_key, title, body, f"{args.base}/{args.quote}")
+  send_bark(device_key, title, body, f"{args.base}/{args.quote}", urgent=alert)
   print("Notification sent.")
   return 0
 
