@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f3f5f2">
+    <title>汇率低点观察</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/app.js" defer></script>
+  </head>
+  <body class="is-loading">
+    <a class="skip-link" href="#main">跳到主要内容</a>
+
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="brand" href="/" aria-label="汇率低点观察首页">
+          <span class="brand-mark" aria-hidden="true">FX</span>
+          <span>
+            <span class="brand-code" id="brandCode">HKD / CNY MONITOR</span>
+            <span class="brand-name">汇率低点观察</span>
+          </span>
+        </a>
+        <div class="header-actions">
+          <span class="source-status"><i></i>ECB 数据源</span>
+          <button class="icon-button" id="refreshButton" type="button" title="刷新汇率">
+            <span aria-hidden="true">↻</span>
+            <span class="button-label">刷新</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main id="main">
+      <div class="error-banner" id="errorBanner" role="alert" hidden>
+        <strong>数据加载失败</strong>
+        <span id="errorMessage"></span>
+      </div>
+
+      <section class="rate-overview" aria-labelledby="pageTitle">
+        <div class="rate-primary">
+          <div class="pair-selector" aria-label="选择货币对">
+            <label class="currency-field" for="baseCurrency">
+              <span>基准货币</span>
+              <select id="baseCurrency">
+                <option value="HKD">HKD · 港币</option>
+              </select>
+            </label>
+            <button class="swap-button" id="swapCurrencies" type="button" title="对调货币" aria-label="对调基准货币和报价货币">
+              <span aria-hidden="true">⇄</span>
+            </button>
+            <label class="currency-field" for="quoteCurrency">
+              <span>报价货币</span>
+              <select id="quoteCurrency">
+                <option value="CNY">CNY · 人民币</option>
+              </select>
+            </label>
+          </div>
+          <div class="section-heading">
+            <p class="eyebrow" id="asOfDate">最新工作日</p>
+            <span class="signal" id="signalBadge"><i></i><span>正在读取</span></span>
+          </div>
+          <h1 id="pageTitle">港币兑人民币</h1>
+          <div class="rate-display" aria-live="polite">
+            <span class="rate-value" id="currentRate">0.00000</span>
+            <span class="rate-unit"><span id="quoteUnit">CNY</span><br><small>每 1 <span id="baseUnit">HKD</span></small></span>
+          </div>
+          <p class="decision-text" id="decisionText">正在检查近期汇率位置</p>
+        </div>
+
+        <div class="conversion-block">
+          <p class="eyebrow">换算估算</p>
+          <label class="amount-control" for="amountInput">
+            <span id="amountLabel">港币金额</span>
+            <span class="input-shell">
+              <input id="amountInput" type="number" min="1" max="1000000" step="100" value="100" inputmode="decimal">
+              <b id="amountCurrency">HKD</b>
+            </span>
+          </label>
+          <div class="conversion-result">
+            <span>约合 <span id="conversionCurrencyLabel">人民币</span></span>
+            <strong id="conversionValue">0.00 CNY</strong>
+          </div>
+        </div>
+
+        <div class="metric-strip">
+          <article>
+            <span>区间最低</span>
+            <strong id="minimumRate">0.00000</strong>
+          </article>
+          <article>
+            <span>区间平均</span>
+            <strong id="averageRate">0.00000</strong>
+          </article>
+          <article>
+            <span>高于最低点</span>
+            <strong id="aboveMinimum">0.00%</strong>
+          </article>
+          <article>
+            <span>区间位置</span>
+            <strong id="percentileValue">0%</strong>
+          </article>
+        </div>
+      </section>
+
+      <section class="chart-section" aria-labelledby="trendTitle">
+        <div class="section-heading chart-heading">
+          <div>
+            <p class="eyebrow">历史走势</p>
+            <h2 id="trendTitle">参考汇率曲线</h2>
+          </div>
+          <div class="segmented-control" aria-label="统计周期">
+            <button type="button" data-days="7">7天</button>
+            <button type="button" data-days="30" aria-pressed="true">30天</button>
+            <button type="button" data-days="60">60天</button>
+            <button type="button" data-days="90">90天</button>
+          </div>
+        </div>
+
+        <div class="chart-frame" id="chartFrame">
+          <svg id="rateChart" viewBox="0 0 960 360" role="img" aria-label="港币兑人民币历史汇率折线图"></svg>
+          <div class="chart-tooltip" id="chartTooltip" hidden></div>
+        </div>
+        <div class="chart-legend" aria-hidden="true">
+          <span><i class="legend-current"></i>每日汇率</span>
+          <span><i class="legend-average"></i>区间平均</span>
+        </div>
+      </section>
+
+      <section class="rules-section" aria-labelledby="rulesTitle">
+        <div class="rules-intro">
+          <p class="eyebrow">提醒规则</p>
+          <h2 id="rulesTitle">低位判断</h2>
+          <p id="ruleSummary">接近区间最低点或处于低位百分位时提醒。</p>
+        </div>
+
+        <form class="rules-form" id="rulesForm">
+          <label class="range-control" for="toleranceInput">
+            <span>
+              <b>最低点容差</b>
+              <output id="toleranceOutput">0.05%</output>
+            </span>
+            <input id="toleranceInput" name="tolerance" type="range" min="0" max="1" step="0.01" value="0.05">
+          </label>
+          <label class="range-control" for="percentileInput">
+            <span>
+              <b>低位百分位</b>
+              <output id="percentileOutput">10%</output>
+            </span>
+            <input id="percentileInput" name="percentile" type="range" min="1" max="50" step="1" value="10">
+          </label>
+          <div class="rule-actions">
+            <button class="button secondary" type="submit">应用规则</button>
+            <button class="button primary" id="notifyButton" type="button">发送测试推送</button>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <footer>
+      <span id="sourceLabel">Frankfurter / European Central Bank</span>
+      <span>参考汇率不含银行点差与手续费</span>
+    </footer>
+
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+  </body>
+</html>

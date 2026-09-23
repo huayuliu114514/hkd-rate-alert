@@ -1,0 +1,30 @@
+name: Check HKD/CNY rate
+
+on:
+  schedule:
+    # 09:00 UTC = 17:00 Hong Kong time, after ECB publishes daily rates.
+    - cron: "0 9 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Send a test notification"
+        type: boolean
+        default: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check rate and notify
+        env:
+          BARK_KEY: ${{ secrets.BARK_KEY }}
+        run: |
+          if [ "${{ inputs.force }}" = "true" ]; then
+            python alert.py --force
+          else
+            python alert.py
+          fi

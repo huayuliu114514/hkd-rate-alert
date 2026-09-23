@@ -1,0 +1,47 @@
+{
+  "expo": {
+    "name": "汇率观察",
+    "slug": "exchange-rate-watch",
+    "description": "查看参考汇率走势，并按高位或低位策略判断兑换时机。",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "ratewatch",
+    "backgroundColor": "#F3F5F1",
+    "primaryColor": "#176B5C",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "developmentClient": {
+      "silentLaunch": true
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.exchangeratewatch.mobile",
+      "backgroundColor": "#F3F5F1",
+      "config": {
+        "usesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.exchangeratewatch.mobile",
+      "backgroundColor": "#F3F5F1",
+      "adaptiveIcon": {
+        "backgroundColor": "#172321",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/favicon.png",
+      "name": "汇率观察",
+      "shortName": "汇率观察",
+      "lang": "zh-CN",
+      "themeColor": "#176B5C",
+      "backgroundColor": "#F3F5F1"
+    },
+    "plugins": [
+      "expo-font"
+    ]
+  }
+}
