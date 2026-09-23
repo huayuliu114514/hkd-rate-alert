@@ -107,10 +107,16 @@ def build_message(
   lookback_days: int,
   base_currency: str = DEFAULT_BASE,
   quote_currency: str = DEFAULT_QUOTE,
+  alert: bool = True,
 ) -> tuple[str, str]:
   """Create the notification title and body."""
   above_min = (summary.current / summary.minimum - 1) * 100
-  title = f"{base_currency}/{quote_currency} 汇率接近近期低点"
+  pair = f"{base_currency}/{quote_currency}"
+  title = (
+      f"【低点提醒】{pair} 汇率接近近期低点"
+      if alert
+      else f"{pair} 今日汇率 {summary.current:.5f}，暂未到低位"
+  )
   body = (
     f"{summary.date}：1 {base_currency} = "
     f"{summary.current:.5f} {quote_currency}\n"
@@ -188,6 +194,11 @@ def parse_args() -> argparse.Namespace:
       help="Send a notification even if the alert rule is not met.",
   )
   parser.add_argument(
+      "--daily",
+      action="store_true",
+      help="Always send the current rate; the title shows whether it is a low.",
+  )
+  parser.add_argument(
       "--dry-run",
       action="store_true",
       help="Print the message without sending it.",
@@ -200,19 +211,22 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
   """Run one exchange-rate check."""
+  # Windows pipes default to a legacy code page that cannot encode Chinese.
+  sys.stdout.reconfigure(encoding="utf-8", errors="replace")
   args = parse_args()
   summary = summarise(fetch_rates(args.lookback_days, args.base, args.quote))
+  alert = should_alert(summary, args.tolerance_pct, args.percentile)
   title, body = build_message(
       summary,
       args.lookback_days,
       args.base,
       args.quote,
+      alert,
   )
-  alert = should_alert(summary, args.tolerance_pct, args.percentile)
 
   print(f"Alert: {alert}\n{title}\n{body}")
 
-  if not (alert or args.force) or args.dry_run:
+  if not (alert or args.force or args.daily) or args.dry_run:
     return 0
 
   device_key = normalize_bark_key(os.environ.get("BARK_KEY", ""))

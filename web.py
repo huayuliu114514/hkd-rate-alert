@@ -183,6 +183,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
           lookback_days,
           base_currency,
           quote_currency,
+          should_alert(summary, tolerance_pct, percentile_limit),
       )
       send_bark(device_key, title, body, f"{base_currency}/{quote_currency}")
       self._send_json({"sent": True, "title": title, "body": body})

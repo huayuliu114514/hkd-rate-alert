@@ -21,7 +21,7 @@ npm run lint
 
 ## Bark 定时提醒
 
-每个工作日检查指定货币对的汇率。当当前汇率接近近 30 天最低点时，通过 Bark 推送到 iPhone。
+每个工作日检查指定货币对的汇率，并通过 Bark 把当天汇率推送到 iPhone。汇率接近近 30 天最低点时，标题会标注为低点提醒。
 
 ## 工作方式
 
@@ -29,10 +29,10 @@ npm run lint
 GitHub Actions 每个工作日 17:00（香港时间）运行
 → Frankfurter API 获取近 30 天指定货币对汇率
 → 判断是否接近近期低点
-→ 通过 Bark 推送到 iPhone
+→ 通过 Bark 推送当天汇率，达到低点时标题显示【低点提醒】
 ```
 
-满足任一条件即提醒：
+满足任一条件即视为低点：
 
 - 当前汇率比近 30 天最低点高不超过 `0.05%`；
 - 当前汇率处于近 30 天最低的 `10%`。
@@ -42,7 +42,7 @@ GitHub Actions 每个工作日 17:00（香港时间）运行
 1. 在 iPhone App Store 安装 **Bark**，打开后复制推送地址中的 key，例如 `https://api.day.app/<key>/`。
 2. 在 GitHub 新建私有仓库并上传本文件夹。
 3. 仓库 **Settings → Secrets and variables → Actions → New repository secret**，名称填 `BARK_KEY`，值填 Bark key。
-4. 打开 **Actions → Check HKD/CNY rate → Run workflow**，勾选 `force` 发送测试通知。
+4. 打开 **Actions → Check HKD/CNY rate → Run workflow**，手动运行一次即可收到测试推送。
 
 ## 本地测试
 
