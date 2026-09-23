@@ -2,8 +2,9 @@ name: Check HKD/CNY rate
 
 on:
   schedule:
-    # Every 30 minutes; GitHub may delay scheduled runs. The ECB rate itself changes once per working day.
-    - cron: "*/30 * * * *"
+    # Every 30 minutes, offset from :00/:30 where GitHub most often delays or drops runs.
+    # The ECB rate itself changes once per working day.
+    - cron: "13,43 * * * *"
   workflow_dispatch:
 
 jobs:
