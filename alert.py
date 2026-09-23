@@ -11,9 +11,10 @@ import datetime as dt
 import json
 import os
 import sys
+import urllib.error
 import urllib.request
 from dataclasses import dataclass
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse
 
 RATE_API = "https://api.frankfurter.dev/v1"
 BARK_API = "https://api.day.app/push"
@@ -122,6 +123,15 @@ def build_message(
   return title, body
 
 
+def normalize_bark_key(value: str) -> str:
+  """Accept a bare Bark key or a pasted Bark URL such as https://api.day.app/KEY/."""
+  value = value.strip().strip("'\"")
+  if "://" in value:
+    path_parts = [part for part in urlparse(value).path.split("/") if part]
+    return path_parts[0] if path_parts else ""
+  return value.strip("/")
+
+
 def send_bark(
   device_key: str,
   title: str,
@@ -143,8 +153,13 @@ def send_bark(
           "User-Agent": USER_AGENT,
       },
   )
-  with urllib.request.urlopen(request, timeout=30) as response:
-    result = json.load(response)
+  try:
+    with urllib.request.urlopen(request, timeout=30) as response:
+      result = json.load(response)
+  except urllib.error.HTTPError as error:
+    detail = error.read().decode("utf-8", "replace")
+    detail = detail.replace(device_key, "***") if device_key else detail
+    raise RuntimeError(f"Bark push failed (HTTP {error.code}): {detail}") from error
   if result.get("code") != 200:
     raise RuntimeError(f"Bark push failed: {result}")
 
@@ -200,7 +215,7 @@ def main() -> int:
   if not (alert or args.force) or args.dry_run:
     return 0
 
-  device_key = os.environ.get("BARK_KEY")
+  device_key = normalize_bark_key(os.environ.get("BARK_KEY", ""))
   if not device_key:
     print("BARK_KEY is not set; notification not sent.", file=sys.stderr)
     return 1
